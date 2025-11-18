@@ -1,0 +1,128 @@
+// src/ui/input/touch.ts
+import { GameAction } from './actions';
+
+/**
+ * Sets up touch controls (both virtual buttons and gestures) and returns a
+ * cleanup function to remove the event listeners.
+ *
+ * @param actionHandler - The callback function to be invoked when a game
+ * action is triggered by a touch event.
+ * @returns A cleanup function that removes all attached event listeners.
+ */
+export function setupTouchControls(actionHandler: (action: GameAction) => void): () => void {
+    // --- 1. Virtual Button Logic ---
+    const buttonToActionMap: { [key: string]: GameAction } = {
+        'btn-rot-ccw': 'rotateCCW',
+        'btn-rot-cw': 'rotateCW',
+        'btn-move-left': 'moveLeft',
+        'btn-move-right': 'moveRight',
+        'btn-hard-drop': 'hardDrop',
+        'btn-soft-drop': 'softDrop',
+    };
+
+    const onButtonPress = (event: Event) => {
+        if (event.cancelable) {
+            event.preventDefault();
+        }
+        const target = event.currentTarget as HTMLElement;
+        target.classList.add('active-touch'); // Add active class
+
+        const action = buttonToActionMap[target.id];
+        if (action) {
+            actionHandler(action);
+        }
+    };
+
+    const onButtonRelease = (event: Event) => {
+        event.preventDefault();
+        const target = event.currentTarget as HTMLElement;
+        target.classList.remove('active-touch'); // Remove active class
+
+        const action = buttonToActionMap[target.id];
+        if (action && (action === 'moveLeft' || action === 'moveRight' || action === 'softDrop')) {
+            actionHandler(`${action}_release` as GameAction);
+        }
+    };
+
+    const buttons = Object.keys(buttonToActionMap).map(id => document.getElementById(id));
+    buttons.forEach(button => {
+        if (button) {
+            button.addEventListener('touchstart', onButtonPress, { passive: false });
+            button.addEventListener('touchend', onButtonRelease, { passive: false });
+            button.addEventListener('touchcancel', onButtonRelease, { passive: false }); // Handle cases where touch is interrupted
+        }
+    });
+
+    // --- 2. Swipe Gesture Logic ---
+    const gameContainer = document.getElementById('game-container');
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const swipeThresholdX = 50; // Min horizontal distance for a swipe
+    const swipeThresholdY = 40; // Min vertical distance for a soft drop
+
+    const onTouchStart = (event: TouchEvent) => {
+        // Ignore swipes that start on a button
+        if ((event.target as HTMLElement).closest('.touch-button')) {
+            return;
+        }
+        touchStartX = event.changedTouches[0].screenX;
+        touchStartY = event.changedTouches[0].screenY;
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+        // Ignore swipes that end on a button
+        if ((event.target as HTMLElement).closest('.touch-button')) {
+            return;
+        }
+        const touchEndX = event.changedTouches[0].screenX;
+        const touchEndY = event.changedTouches[0].screenY;
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        let action: GameAction | null = null;
+
+        // Prioritize horizontal movement
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            if (deltaX > swipeThresholdX) {
+                action = 'moveRight';
+            } else if (deltaX < -swipeThresholdX) {
+                action = 'moveLeft';
+            }
+        }
+        else { // Vertical movement
+            if (deltaY > swipeThresholdY) {
+                action = 'softDrop';
+            }
+        }
+
+        if (action) {
+            actionHandler(action);
+            // To prevent perpetual movement from a swipe, we immediately
+            // send the corresponding release action.
+            const releaseAction = `${action}_release` as GameAction;
+            setTimeout(() => actionHandler(releaseAction), 0);
+        }
+    };
+
+    if (gameContainer) {
+        gameContainer.addEventListener('touchstart', onTouchStart, { passive: true });
+        gameContainer.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+
+    // --- 3. Cleanup Logic ---
+    const cleanup = () => {
+        buttons.forEach(button => {
+            if (button) {
+                button.removeEventListener('touchstart', onButtonPress);
+                button.removeEventListener('touchend', onButtonRelease);
+                button.removeEventListener('touchcancel', onButtonRelease);
+            }
+        });
+        if (gameContainer) {
+            gameContainer.removeEventListener('touchstart', onTouchStart);
+            gameContainer.removeEventListener('touchend', onTouchEnd);
+        }
+    };
+
+    return cleanup;
+}
