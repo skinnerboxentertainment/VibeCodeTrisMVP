@@ -8,6 +8,7 @@ export enum UIState {
     GameOver,
     Soundboard,
     ToneJammer,
+    Controls,
 }
 
 export interface VisualSettings {
@@ -57,8 +58,9 @@ export class UIStateManager {
         const soundboard = document.getElementById('soundboard-screen');
         const toneJammer = document.getElementById('tone-jammer-screen');
         const pauseOverlay = document.getElementById('pause-overlay');
+        const controlsModal = document.getElementById('controls-modal');
 
-        if (!mainMenu || !inGame || !settings || !gameOver || !soundboard || !toneJammer || !pauseOverlay) {
+        if (!mainMenu || !inGame || !settings || !gameOver || !soundboard || !toneJammer || !pauseOverlay || !controlsModal) {
             throw new Error('One or more UI view elements are missing from the DOM.');
         }
 
@@ -69,6 +71,7 @@ export class UIStateManager {
         this.viewElements.set(UIState.Soundboard, soundboard);
         this.viewElements.set(UIState.ToneJammer, toneJammer);
         this.viewElements.set(UIState.Paused, pauseOverlay);
+        this.viewElements.set(UIState.Controls, controlsModal);
 
 
         // Set the initial state visibility

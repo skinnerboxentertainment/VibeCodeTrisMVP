@@ -1,3 +1,5 @@
+import { UIStateManager, UIState } from './state';
+
 interface ControlMapping {
     action: string;
     icon: string;
@@ -25,7 +27,8 @@ const controlMappings: ControlCategory = {
         { action: 'Rotate CW', icon: '/assets/icons/Xbox Series/Vector/xbox_button_b.svg' },
         { action: 'Rotate CCW', icon: '/assets/icons/Xbox Series/Vector/xbox_button_x.svg' },
         { action: 'Pause', icon: '/assets/icons/Xbox Series/Vector/xbox_button_start.svg' },
-    ],    touch: [
+    ],
+    touch: [
         { action: 'Move Left', icon: '/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_left.svg' },
         { action: 'Move Right', icon: '/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_right.svg' },
         { action: 'Soft Drop', icon: '/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_down.svg' },
@@ -35,7 +38,7 @@ const controlMappings: ControlCategory = {
     ],
 };
 
-export function initializeControlsPanel(pauseControlsButtonId?: string) {
+export function initializeControlsPanel(uiManager: UIStateManager, pauseControlsButtonId?: string) {
     const btnControls = document.getElementById('btn-controls');
     const btnCloseControls = document.getElementById('btn-close-controls');
     const controlsModal = document.getElementById('controls-modal');
@@ -51,6 +54,10 @@ export function initializeControlsPanel(pauseControlsButtonId?: string) {
         console.error('Controls panel elements (close button, modal, tabs, or sections) not found!');
         return;
     }
+
+    // Make buttons focusable
+    btnCloseControls.setAttribute('data-focusable', 'true');
+    tabButtons.forEach(button => button.setAttribute('data-focusable', 'true'));
 
     const showControlsTab = (tabName: string) => {
         tabButtons.forEach(button => {
@@ -84,7 +91,7 @@ export function initializeControlsPanel(pauseControlsButtonId?: string) {
     });
 
     const openControlsModal = () => {
-        controlsModal.classList.remove('hidden');
+        uiManager.changeState(UIState.Controls);
         showControlsTab('keyboard'); // Default to keyboard tab
     };
 
@@ -102,12 +109,12 @@ export function initializeControlsPanel(pauseControlsButtonId?: string) {
     }
 
     btnCloseControls.addEventListener('click', () => {
-        controlsModal.classList.add('hidden');
+        uiManager.changeState(uiManager.getPreviousState());
     });
 
     controlsModal.addEventListener('click', (event) => {
         if (event.target === controlsModal) {
-            controlsModal.classList.add('hidden');
+            uiManager.changeState(uiManager.getPreviousState());
         }
     });
 

@@ -29,8 +29,8 @@ export class UINavigator {
         this.updateFocusableElements();
 
         if (this.focusableElements.length > 0) {
-            // In settings, focus the first tab by default
-            if (newState === UIState.Settings && this.settingTabs.length > 0) {
+            // In settings or controls, focus the first tab by default
+            if ((newState === UIState.Settings || newState === UIState.Controls) && this.settingTabs.length > 0) {
                 this.activeTabIndex = 0;
                 this.setFocus(0);
             } else {
@@ -58,6 +58,9 @@ export class UINavigator {
             case UIState.GameOver:
                 container = document.getElementById('game-over-screen');
                 break;
+            case UIState.Controls:
+                container = document.getElementById('controls-modal');
+                break;
         }
 
         if (!container) {
@@ -84,6 +87,13 @@ export class UINavigator {
             if (backButton) {
                 this.focusableElements.push(backButton);
             }
+        } else if (currentState === UIState.Controls) {
+            this.settingTabs = Array.from(container.querySelectorAll('.control-tab'));
+            const closeButton = document.getElementById('btn-close-controls');
+            this.focusableElements = [...this.settingTabs];
+            if (closeButton) {
+                this.focusableElements.push(closeButton);
+            }
         } else {
             this.focusableElements = Array.from(container.querySelectorAll('[data-focusable="true"]'));
         }
@@ -108,8 +118,9 @@ export class UINavigator {
 
     public navigateDown(): void {
         if (this.focusableElements.length === 0) return;
+        const currentState = this.uiManager.getCurrentState();
 
-        if (this.uiManager.getCurrentState() === UIState.Settings) {
+        if (currentState === UIState.Settings) {
             // If a tab is focused, move to the first item in its section
             const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
             if (isTabFocused) {
@@ -127,6 +138,16 @@ export class UINavigator {
                     this.setFocus(newIndex);
                 }
             }
+        } else if (currentState === UIState.Controls) {
+            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
+            if (isTabFocused) {
+                // from any tab, down goes to the close button
+                const closeButtonIndex = this.focusableElements.length - 1;
+                this.setFocus(closeButtonIndex);
+            } else {
+                // from the close button, down goes to the active tab
+                this.setFocus(this.activeTabIndex);
+            }
         } else {
             const newIndex = (this.currentFocusIndex + 1) % this.focusableElements.length;
             this.setFocus(newIndex);
@@ -135,8 +156,9 @@ export class UINavigator {
 
     public navigateUp(): void {
         if (this.focusableElements.length === 0) return;
+        const currentState = this.uiManager.getCurrentState();
 
-        if (this.uiManager.getCurrentState() === UIState.Settings) {
+        if (currentState === UIState.Settings) {
             const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
             if (!isTabFocused) {
                  // If we are on the first setting, go back to the active tab
@@ -149,6 +171,16 @@ export class UINavigator {
                     this.setFocus(newIndex);
                 }
             }
+        } else if (currentState === UIState.Controls) {
+            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
+            if (isTabFocused) {
+                // from any tab, up goes to the close button
+                const closeButtonIndex = this.focusableElements.length - 1;
+                this.setFocus(closeButtonIndex);
+            } else {
+                // from the close button, up goes to the active tab
+                this.setFocus(this.activeTabIndex);
+            }
         } else {
             const newIndex = (this.currentFocusIndex - 1 + this.focusableElements.length) % this.focusableElements.length;
             this.setFocus(newIndex);
@@ -156,7 +188,7 @@ export class UINavigator {
     }
 
     public navigate(direction: 'left' | 'right'): void {
-        if (this.uiManager.getCurrentState() !== UIState.Settings) return;
+        if (this.uiManager.getCurrentState() !== UIState.Settings && this.uiManager.getCurrentState() !== UIState.Controls) return;
 
         const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
         if (isTabFocused) {

@@ -236,7 +236,7 @@ async function main() {
 
     const toneJammerManager = new ToneJammerManager(audioConfig, audioEngine, jammerElements as any);
 
-    initializeControlsPanel('controls-button-pause');
+    initializeControlsPanel(uiManager, 'controls-button-pause');
     initializeSettingsTabs();
 
     // Populate line clear animation dropdown

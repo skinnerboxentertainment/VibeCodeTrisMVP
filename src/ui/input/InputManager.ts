@@ -19,15 +19,11 @@ export class InputManager {
     private notificationManager: NotificationManager;
     private uiManager: UIStateManager;
     private uiNavigator: UINavigator;
-    private controlsModal: HTMLElement | null;
-    private tabButtons: NodeListOf<HTMLButtonElement> | null;
 
     constructor(notificationManager: NotificationManager, uiManager: UIStateManager) {
         this.notificationManager = notificationManager;
         this.uiManager = uiManager;
         this.uiNavigator = new UINavigator(this.uiManager);
-        this.controlsModal = document.getElementById('controls-modal');
-        this.tabButtons = document.querySelectorAll<HTMLButtonElement>('.control-tab');
 
         /**
          * The central handler that receives an action from any input source
@@ -35,39 +31,6 @@ export class InputManager {
          */
         const actionHandler = (action: GameAction) => {
             const state = this.uiManager.getCurrentState();
-
-            // Handle tab navigation within the controls modal
-            if (this.isControlsModalVisible() && (action === 'moveLeft' || action === 'moveRight')) {
-                if (this.tabButtons) {
-                    const activeTab = document.querySelector<HTMLButtonElement>('.control-tab.active');
-                    let currentIndex = -1;
-                    if (activeTab) {
-                        this.tabButtons.forEach((button, index) => {
-                            if (button === activeTab) {
-                                currentIndex = index;
-                            }
-                        });
-                    }
-
-                    let nextIndex = currentIndex;
-                    if (action === 'moveLeft') {
-                        nextIndex = (currentIndex - 1 + this.tabButtons.length) % this.tabButtons.length;
-                    } else if (action === 'moveRight') {
-                        nextIndex = (currentIndex + 1) % this.tabButtons.length;
-                    }
-
-                    if (this.tabButtons[nextIndex]) {
-                        this.tabButtons[nextIndex].click();
-                    }
-                }
-                return; // Action handled, stop further processing
-            }
-
-            // If the controls modal is visible, the 'back' action should always close it first.
-            if (action === 'back' && this.isControlsModalVisible()) {
-                this.hideControlsModal();
-                return; // Stop further processing
-            }
 
             if (action === 'pause') {
                 if (state === UIState.InGame) {
@@ -79,7 +42,7 @@ export class InputManager {
             }
 
             if (action === 'back') {
-                if (state === UIState.Settings) {
+                if (state === UIState.Settings || state === UIState.Controls) {
                     this.uiManager.changeState(this.uiManager.getPreviousState());
                 } else if (state === UIState.Paused) {
                     this.uiManager.changeState(UIState.InGame);
@@ -90,15 +53,16 @@ export class InputManager {
             const isMenuState = state === UIState.MainMenu ||
                                 state === UIState.Paused ||
                                 state === UIState.Settings ||
-                                state === UIState.GameOver;
+                                state === UIState.GameOver ||
+                                state === UIState.Controls;
 
             if (isMenuState) {
                 let navAction = true; // Assume it's a nav action by default
                 switch (action) {
-                    case 'rotateCW':
+                    case 'rotateCW': // up
                         this.uiNavigator.navigateUp();
                         break;
-                    case 'softDrop':
+                    case 'softDrop': // down
                         this.uiNavigator.navigateDown();
                         break;
                     case 'moveLeft':
@@ -107,7 +71,7 @@ export class InputManager {
                     case 'moveRight':
                         this.uiNavigator.navigate('right');
                         break;
-                    case 'hardDrop':
+                    case 'hardDrop': // select
                         this.uiNavigator.select();
                         break;
                     default:
@@ -129,16 +93,6 @@ export class InputManager {
         };
 
         this.detectAndSetupInputs(actionHandler);
-    }
-
-    private isControlsModalVisible(): boolean {
-        return this.controlsModal ? !this.controlsModal.classList.contains('hidden') : false;
-    }
-
-    private hideControlsModal(): void {
-        if (this.controlsModal) {
-            this.controlsModal.classList.add('hidden');
-        }
     }
 
     private detectAndSetupInputs(actionHandler: (action: GameAction) => void) {
