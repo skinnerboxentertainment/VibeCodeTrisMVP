@@ -272,6 +272,53 @@
             #btn-move-right { grid-column: 3; grid-row: 2; }
         }
     </style>
+     <style>
+        /* --- Responsive Game Layout --- */
+        .responsive-game-wrapper {
+            display: flex;
+            flex-direction: column; /* Mobile-first: default to vertical stacking */
+            width: 100%;
+            max-width: 480px; /* Sensible max-width for portrait on tablets */
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .responsive-game-wrapper #game-container {
+            width: 100%;
+            flex-grow: 1; /* Allow game container to fill available space */
+            min-height: 0; /* Fix flexbox overflow issue in column layout */
+        }
+
+        .responsive-game-wrapper #touch-controls {
+            width: 100%;
+            flex-shrink: 0; /* Prevent controls from shrinking */
+        }
+
+        /* --- Tablet Landscape & Desktop --- */
+        @media (min-width: 768px) and (orientation: landscape) {
+            .responsive-game-wrapper {
+                flex-direction: row; /* Switch to horizontal layout */
+                max-width: 1024px;   /* Allow the container to be wider */
+                align-items: center; /* Vertically align items in the middle */
+                gap: 20px;
+                height: 95vh; /* Take up most of the viewport height */
+            }
+
+            .responsive-game-wrapper #game-container {
+                flex-grow: 0; /* Do not grow */
+                flex-shrink: 0; /* Do not shrink */
+                width: auto; /* Let height determine width */
+                height: 100%;
+            }
+            
+            .responsive-game-wrapper #touch-controls {
+                flex-grow: 1;
+                max-width: 300px;
+                height: auto; /* Auto height for controls */
+                margin-top: 0; /* Remove top margin from portrait mode */
+            }
+        }
+    </style>
     <style>
         /* --- Settings Screen Styles --- */
         #settings-screen {
@@ -644,14 +691,16 @@
 
         <!-- In-Game Screen -->
         <div id="in-game" class="hidden">
-            <div id="game-container"></div>
-            <div id="touch-controls">
-                <div id="btn-rot-ccw" class="touch-button"><img src="/assets/icons/Flairs/Vector/flair_arrow_3_reverse.svg" alt="Rotate Counter-Clockwise"></div>
-                <div id="btn-hard-drop" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_capslock_icon_down.svg" alt="Hard Drop"></div>
-                <div id="btn-rot-cw" class="touch-button"><img src="/assets/icons/Flairs/Vector/flair_arrow_3.svg" alt="Rotate Clockwise"></div>
-                <div id="btn-move-left" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_left.svg" alt="Move Left"></div>
-                <div id="btn-soft-drop" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_down.svg" alt="Soft Drop"></div>
-                <div id="btn-move-right" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_right.svg" alt="Move Right"></div>
+            <div class="responsive-game-wrapper">
+                <div id="game-container"></div>
+                <div id="touch-controls">
+                    <div id="btn-rot-ccw" class="touch-button"><img src="/assets/icons/Flairs/Vector/flair_arrow_3_reverse.svg" alt="Rotate Counter-Clockwise"></div>
+                    <div id="btn-hard-drop" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_capslock_icon_down.svg" alt="Hard Drop"></div>
+                    <div id="btn-rot-cw" class="touch-button"><img src="/assets/icons/Flairs/Vector/flair_arrow_3.svg" alt="Rotate Clockwise"></div>
+                    <div id="btn-move-left" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_left.svg" alt="Move Left"></div>
+                    <div id="btn-soft-drop" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_down.svg" alt="Soft Drop"></div>
+                    <div id="btn-move-right" class="touch-button"><img src="/assets/icons/Keyboard & Mouse/Vector/keyboard_arrow_right.svg" alt="Move Right"></div>
+                </div>
             </div>
         </div>
 
