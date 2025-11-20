@@ -27,6 +27,7 @@ import { VhsGlitchMultiplierEffect } from './animations/multiplier/VhsGlitchMult
 const BORDER_WIDTH = 2;
 const TEXT_VERTICAL_OFFSET = 5; // Pixels to shift UI text down
 const TEXT_HORIZONTAL_OFFSET = 5; // Pixels to shift level right and lines left
+const UI_TOP_AREA_HEIGHT = 60; // Standard height for the UI area
 
 const THEMES = {
     default: [
@@ -80,6 +81,11 @@ export class PixiRenderer {
     private _displayScore = 0;
     private _currentMultiplierEffect: IMultiplierEffect | null = null;
     private _lastMultiplierEffectType: 'default' | 'scanline' | 'none' = 'default';
+    private _pauseButtonContainer: PIXI.Container;
+    private _pauseButtonBorder: PIXI.Graphics;
+    private _pauseButtonBorderShadow: PIXI.Graphics;
+    private _pauseButtonDefaultBorderAlpha: number = 0.35; // Default opacity for the border
+    private _pauseButtonHoverBorderAlpha: number = 1.0;   // Opacity on hover
 
     private constructor(uiManager: UIStateManager, accessibilityManager: AccessibilityManager, initialSettings: VisualSettings, audioEngine: AudioEngine) {
         this.app = new PIXI.Application();
@@ -92,6 +98,9 @@ export class PixiRenderer {
         this.audioEngine = audioEngine; // Assign AudioEngine
         this.animationManager = new AnimationManager();
         this.uiTextContainer = new PIXI.Container();
+        this._pauseButtonContainer = new PIXI.Container();
+        this._pauseButtonBorder = new PIXI.Graphics();
+        this._pauseButtonBorderShadow = new PIXI.Graphics();
         
         const textStyle = new PIXI.TextStyle({
             fontFamily: "'Press Start 2P', cursive",
@@ -118,15 +127,29 @@ export class PixiRenderer {
 
         const labelStyle = new PIXI.TextStyle({
             fontFamily: "'Press Start 2P', cursive",
-            fontSize: 12, // Smaller font size for labels
+            fontSize: 10, // Increased font size for labels by 50% (from 12 to 18)
             fill: '#CCCCCC', // Lighter gray color
             align: 'center',
         });
 
+        const scoreLabelStyle = new PIXI.TextStyle({
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: 14,
+            fill: '#FFFF00', // Gold color for score label
+            align: 'center',
+        });
+
+        const levelLinesTextStyle = new PIXI.TextStyle({
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: 12, // Slightly reduced font size from 20 to 18
+            fill: '#FFFFFF', // Light blue color
+            align: 'center',
+        });
+
         this.scoreText = new PIXI.Text({ text: '0', style: textStyle });
-        this.levelText = new PIXI.Text({ text: '1', style: textStyle });
-        this.linesText = new PIXI.Text({ text: '0', style: textStyle });
-        this.scoreLabel = new PIXI.Text({ text: 'SCORE', style: labelStyle });
+        this.levelText = new PIXI.Text({ text: '1', style: levelLinesTextStyle });
+        this.linesText = new PIXI.Text({ text: '0', style: levelLinesTextStyle });
+        this.scoreLabel = new PIXI.Text({ text: 'SCORE', style: scoreLabelStyle });
         this.levelLabel = new PIXI.Text({ text: 'LEVEL', style: labelStyle });
         this.linesLabel = new PIXI.Text({ text: 'LINES', style: labelStyle });
         this.multiplierText = new PIXI.Text({ text: 'x1', style: multiplierStyle });
@@ -144,7 +167,7 @@ export class PixiRenderer {
         const renderer = new PixiRenderer(uiManager, accessibilityManager, initialSettings, audioEngine);
         await renderer.app.init({
             width: BOARD_WIDTH,
-            height: BOARD_HEIGHT,
+            height: BOARD_HEIGHT + UI_TOP_AREA_HEIGHT,
             backgroundColor: 0x000000,
             antialias: true,
         });
@@ -372,26 +395,48 @@ export class PixiRenderer {
     }
 
     private initText() {
-            this.uiTextContainer.addChild(
-                this.scoreText, this.levelText, this.linesText, 
-                this.scoreLabel, this.levelLabel, this.linesLabel, 
-                this.multiplierText, this.pauseButton
-            );
+    this.uiTextContainer.addChild(
+        this.scoreText, this.levelText, this.linesText,
+        this.scoreLabel, this.levelLabel, this.linesLabel,
+        this.multiplierText, this._pauseButtonContainer // Add the container
+    );
+
+    // Add elements to the new container
+    this._pauseButtonContainer.addChild(this._pauseButtonBorderShadow, this._pauseButtonBorder, this.pauseButton);
+
+    this.levelText.anchor.set(0.5, 0);
+    this.scoreText.anchor.set(0.5, 0);
+    this.linesText.anchor.set(0.5, 0);
+    this.levelLabel.anchor.set(0, 0);
+    this.scoreLabel.anchor.set(0.5, 0);
+    this.linesLabel.anchor.set(1, 0);
+    this.multiplierText.anchor.set(0.5, 0);
+    this.pauseButton.anchor.set(1, 0);
+
+    // Initial drawing of border/shadow. Final dimensions are set in resize().
+    const textWidth = this.pauseButton.width;
+    const textHeight = this.pauseButton.height;
+    const padding = 5;
+    const shadowOffset = 3;
+
+    // Draw shadow
+    this._pauseButtonBorderShadow.roundRect(-textWidth - padding + shadowOffset, -padding + shadowOffset, textWidth + padding * 2, textHeight + padding * 2, 5).fill({ color: 0x000000, alpha: 0.5 });
     
-            this.levelText.anchor.set(0, 0);
-            this.scoreText.anchor.set(0.5, 0);
-            this.linesText.anchor.set(1, 0);
-            this.levelLabel.anchor.set(0, 0);
-            this.scoreLabel.anchor.set(0.5, 0);
-            this.linesLabel.anchor.set(1, 0);
-    
-            this.multiplierText.anchor.set(0.5, 0);
-            this.pauseButton.anchor.set(1, 0);
-    
-            this.pauseButton.alpha = 0.25;
-            this.pauseButton.eventMode = 'static';
-            this.pauseButton.on('pointerdown', this.onPauseButtonClick, this);
-    }
+    // Draw main border
+    this._pauseButtonBorder
+      .roundRect(-textWidth - padding, -padding, textWidth + padding * 2, textHeight + padding * 2, 5)
+      .stroke({ width: 2, color: 0xFFFFFF, alpha: this._pauseButtonDefaultBorderAlpha });
+    this._pauseButtonBorder.alpha = this._pauseButtonDefaultBorderAlpha;
+
+    // Configure container for interaction
+    this._pauseButtonContainer.eventMode = 'static';
+    this._pauseButtonContainer.cursor = 'pointer';
+
+    // Event listeners for hover feedback
+    this._pauseButtonContainer.on('pointerover', () => { this._pauseButtonBorder.alpha = this._pauseButtonHoverBorderAlpha; }, this);
+    this._pauseButtonContainer.on('pointerout', () => { this._pauseButtonBorder.alpha = this._pauseButtonDefaultBorderAlpha; }, this);
+    this._pauseButtonContainer.on('pointerdown', this.onPauseButtonClick, this);
+}
 
     private onPauseButtonClick() {
         this.uiManager.changeState(UIState.Paused);
@@ -763,23 +808,27 @@ export class PixiRenderer {
     public resize(width: number, height: number) {
         this.app.renderer.resize(width, height);
 
-        const TEXT_AREA_HEIGHT = 60; // Increased height for the text area
-        const scaleX = width / BOARD_WIDTH;
-        const scaleY = height / (BOARD_HEIGHT + TEXT_AREA_HEIGHT);
-        const scale = Math.min(scaleX, scaleY);
+        const gameLogicalWidth = BOARD_WIDTH;
+        const gameLogicalHeight = BOARD_HEIGHT + UI_TOP_AREA_HEIGHT; // Total logical height including UI area
 
+        const scaleX = width / gameLogicalWidth;
+        const scaleY = height / gameLogicalHeight;
+
+        const scale = Math.min(scaleX, scaleY); // Choose the smaller scale to fit content within viewport
+
+        // Apply scale to all main containers
         this.boardContainer.scale.set(scale);
         this.backgroundWellContainer.scale.set(scale);
         this.foregroundWellContainer.scale.set(scale);
         this.uiTextContainer.scale.set(scale);
 
-        const scaledBoardWidth = BOARD_WIDTH * scale;
-        const scaledBoardHeight = BOARD_HEIGHT * scale;
-        const topMargin = TEXT_AREA_HEIGHT * scale;
-        const totalScaledHeight = scaledBoardHeight + topMargin;
+        // Calculate rendered dimensions after scaling
+        const renderedGameWidth = gameLogicalWidth * scale;
+        const renderedGameHeight = gameLogicalHeight * scale;
 
-        const horizontalMargin = (width - scaledBoardWidth) / 2;
-        const verticalMargin = (height - totalScaledHeight) / 2;
+        // Calculate margins to center the game content
+        const horizontalMargin = (width - renderedGameWidth) / 2;
+        const verticalMargin = (height - renderedGameHeight) / 2;
 
         // Position containers
         this.boardContainer.x = horizontalMargin;
@@ -787,40 +836,58 @@ export class PixiRenderer {
         this.foregroundWellContainer.x = horizontalMargin;
         this.uiTextContainer.x = horizontalMargin;
 
-        this.uiTextContainer.y = verticalMargin + TEXT_VERTICAL_OFFSET;
-        this.boardContainer.y = verticalMargin + topMargin;
-        this.backgroundWellContainer.y = verticalMargin + topMargin;
-        this.foregroundWellContainer.y = verticalMargin + topMargin;
+        // Position UI text container at the top of the *scaled* content area, with its own internal offset
+        this.uiTextContainer.y = verticalMargin + (TEXT_VERTICAL_OFFSET * scale);
 
-        // Position text elements within the uiTextContainer
+        // Position board-related containers below the UI top area
+        const boardYOffset = verticalMargin + (UI_TOP_AREA_HEIGHT * scale);
+        this.boardContainer.y = boardYOffset;
+        this.backgroundWellContainer.y = boardYOffset;
+        this.foregroundWellContainer.y = boardYOffset;
+
+        // Position text elements within the uiTextContainer (these remain relative to uiTextContainer's origin)
         const labelYOffset = -15; // Position labels above the values
         const valueY = 25;
 
         // Position LEVEL
-        this.levelText.x = TEXT_HORIZONTAL_OFFSET;
-        this.levelText.y = valueY;
         this.levelLabel.x = TEXT_HORIZONTAL_OFFSET;
         this.levelLabel.y = valueY + labelYOffset;
+        this.levelText.x = this.levelLabel.x + this.levelLabel.width / 2;
+        this.levelText.y = valueY;
 
         // Position SCORE
         this.scoreText.x = BOARD_WIDTH / 2;
-        this.scoreText.y = valueY;
+        this.scoreText.y = valueY - 6;
         this.scoreLabel.x = BOARD_WIDTH / 2;
-        this.scoreLabel.y = valueY + labelYOffset;
+        this.scoreLabel.y = valueY + labelYOffset - 20 + 10;
 
         // Position LINES
-        this.linesText.x = BOARD_WIDTH - TEXT_HORIZONTAL_OFFSET;
-        this.linesText.y = valueY;
         this.linesLabel.x = BOARD_WIDTH - TEXT_HORIZONTAL_OFFSET;
         this.linesLabel.y = valueY + labelYOffset;
+        this.linesText.x = this.linesLabel.x - this.linesLabel.width / 2;
+        this.linesText.y = valueY;
 
         // Position MULTIPLIER
         this.multiplierText.x = BOARD_WIDTH / 2;
         this.multiplierText.y = this.scoreText.y + 22;
 
-        // Position PAUSE button
-        this.pauseButton.x = BOARD_WIDTH - TEXT_HORIZONTAL_OFFSET;
-        this.pauseButton.y = this.multiplierText.y + 22;
+        // Position PAUSE button container
+        this._pauseButtonContainer.x = BOARD_WIDTH - TEXT_HORIZONTAL_OFFSET;
+        this._pauseButtonContainer.y = this.multiplierText.y + 22;
+
+        // Redraw the border and shadow with updated dimensions
+        const textWidth = this.pauseButton.width;
+        const textHeight = this.pauseButton.height;
+        const padding = 5;
+        const shadowOffset = 3;
+
+        // Redraw shadow
+        this._pauseButtonBorderShadow.clear();
+        this._pauseButtonBorderShadow.roundRect(-textWidth - padding + shadowOffset, -padding + shadowOffset, textWidth + padding * 2, textHeight + padding * 2, 5).fill({ color: 0x000000, alpha: 0.5 });
+
+        // Redraw main border, preserving its current alpha state
+        this._pauseButtonBorder.clear();
+        this._pauseButtonBorder.roundRect(-textWidth - padding, -padding, textWidth + padding * 2, textHeight + padding * 2, 5).stroke({ width: 2, color: 0xFFFFFF });
     }
 
     public setWellCell(x: number, y: number, color: number, alpha: number, targetSprites: PIXI.Graphics[] = this.backgroundWellSprites): void {
