@@ -1,7 +1,7 @@
 // src/main.ts
 import { PixiRenderer } from './renderer/pixiRenderer';
 import { InputManager } from './ui/input/InputManager';
-import { UIStateManager, UIState, VisualSettings } from './ui/state';
+import { UIStateManager, UIState, VisualSettings, SettingsSection } from './ui/state';
 import { AccessibilityManager } from './ui/accessibility';
 import { AudioEngine } from './audio/AudioEngine';
 import { AudioConfig } from './audio/types';

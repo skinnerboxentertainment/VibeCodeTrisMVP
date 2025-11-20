@@ -41,6 +41,7 @@ const controlMappings: ControlCategory = {
 export function initializeControlsPanel(uiManager: UIStateManager, pauseControlsButtonId?: string) {
     const btnControls = document.getElementById('btn-controls');
     const btnCloseControls = document.getElementById('btn-close-controls');
+    const btnBackControls = document.getElementById('back-button-controls');
     const controlsModal = document.getElementById('controls-modal');
 
     const tabButtons = document.querySelectorAll<HTMLButtonElement>('.control-tab');
@@ -50,13 +51,14 @@ export function initializeControlsPanel(uiManager: UIStateManager, pauseControls
         touch: document.getElementById('touch-controls-section'),
     };
 
-    if (!btnCloseControls || !controlsModal || !tabButtons.length || !controlSections.keyboard || !controlSections.gamepad || !controlSections.touch) {
-        console.error('Controls panel elements (close button, modal, tabs, or sections) not found!');
+    if (!btnCloseControls || !btnBackControls || !controlsModal || !tabButtons.length || !controlSections.keyboard || !controlSections.gamepad || !controlSections.touch) {
+        console.error('Controls panel elements (close button, back button, modal, tabs, or sections) not found!');
         return;
     }
 
     // Make buttons focusable
     btnCloseControls.setAttribute('data-focusable', 'true');
+    btnBackControls.setAttribute('data-focusable', 'true');
     tabButtons.forEach(button => button.setAttribute('data-focusable', 'true'));
 
     const showControlsTab = (tabName: string) => {
@@ -108,13 +110,15 @@ export function initializeControlsPanel(uiManager: UIStateManager, pauseControls
         }
     }
 
-    btnCloseControls.addEventListener('click', () => {
+    const closeControlsModal = () => {
         uiManager.changeState(uiManager.getPreviousState());
-    });
+    };
 
+    btnCloseControls.addEventListener('click', closeControlsModal);
+    btnBackControls.addEventListener('click', closeControlsModal);
     controlsModal.addEventListener('click', (event) => {
         if (event.target === controlsModal) {
-            uiManager.changeState(uiManager.getPreviousState());
+            closeControlsModal();
         }
     });
 

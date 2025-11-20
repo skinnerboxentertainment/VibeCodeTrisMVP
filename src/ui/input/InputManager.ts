@@ -109,6 +109,12 @@ export class InputManager {
         const gamepadActionHandler = (action: GameAction, inputType: InputType) => {
             actionHandler(action, 'gamepad');
         };
+        
+        // Listen for custom events to dispatch actions from UI components
+        document.addEventListener('dispatch-game-action', ((event: CustomEvent) => {
+            const { action, inputType } = event.detail;
+            actionHandler(action, inputType || 'ui');
+        }) as EventListener);
 
 
         this.cleanupKeyboard = setupKeyboardControls(keyboardActionHandler);

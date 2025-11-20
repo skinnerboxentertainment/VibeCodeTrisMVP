@@ -1,6 +1,6 @@
 # 🎮 VibeCodeTris
 
-> Dive into VibeCodeTris: A meticulously engineered Tetris experience where every move resonates with a unique, procedural "vibe." Built with TypeScript and a worker-driven architecture, it pushes the boundaries of replayability, accessibility, and dynamic audio.
+> VibeCodeTris: A GENERIC BLOCK DROPPING experience where every move resonates with a unique, procedural "tone." Built with TypeScript and a worker-driven architecture, it seeks to explore the boundaries of replayability, accessibility, and dynamic audio. This project was designed and implemented in a series of iterative, conversational interactions with various "AI" LLM Agents.  
 
 ---
 
@@ -13,9 +13,9 @@
 
 ## 🧭 Overview
 
-**VibeCodeTris** is an ambitious experimental project aimed at redefining the classic falling block puzzle game. We've crafted a modern, robust T####s engine from the ground up, emphasizing a strict separation between core game logic and presentation. This innovative design unlocks advanced capabilities, including perfectly deterministic replays, resilient crash-recovery, and a deeply customizable, adaptive player experience.
+**VibeCodeTris** is an experimental project aimed at implementing a well known classic falling block puzzle game. We (a few Agentic AI Bots... I guess???) crafted a modern, robust T####s engine from the ground up, emphasizing a strict separation between core game logic and presentation. This design unlocks advanced capabilities, including perfectly deterministic replays, resilient crash-recovery, and a deeply customizable, adaptive player experience.
 
-Developed using the **"VibeCoding"** methodology, VibeCodeTris embodies a spec-first, AI-augmented workflow. Every architectural decision and feature is rigorously documented and validated, leveraging advanced tools to ensure a high-quality, maintainable, and forward-thinking codebase.
+Developed using the **"VibeCoding"** methodology, VibeCodeTris embodies a spec-first, AI-augmented iterative workflow. Every architectural decision and feature is rigorously documented and validated, leveraging advanced tools to ensure a high-quality, maintainable, and forward-thinking codebase.
 
 ---
 
@@ -23,10 +23,9 @@ Developed using the **"VibeCoding"** methodology, VibeCodeTris embodies a spec-f
 
 ### Core Gameplay Mechanics
 
--   **Deterministic Engine:** Experience unparalleled consistency. Every game is 100% reproducible from an initial seed and input log, powered by a finely-tuned, tick-based simulation and a custom Pseudo-Random Number Generator (PRNG).
+-   **Deterministic Engine:** Experience unparalleled consistency. Every game is 100% reproducible from an initial seed and input log, powered by a finely-tuned, tick-based simulation and a custom Pseudo-Random Number Generator (PRNG). That said, this feature is not currently exposed to the player;
 -   **Modern Tetris Ruleset:** Enjoy the familiar yet refined mechanics of the Super Rotation System (SRS) for precise piece manipulation and a 7-Bag randomizer for equitable piece distribution.
--   **Advanced Scoring System:** Engage with a unified multiplier system that richly rewards high-tempo, skilled play. Score big with bonuses for line clears, intricate T-Spins, sustained combos, and back-to-back achievements.
--   **Strategic Hold & Next Queue:** Master your strategy with standard hold piece functionality and a multi-piece "next" preview, allowing for deep tactical planning.
+-   **Advanced Scoring System:** Engage with a unified multiplier system that richly rewards high-tempo, skilled play. Score big with bonuses for line clears, sustained combos, etc.
 -   **Adjustable Timings:** Tailor the gameplay to your exact preferences with user-configurable DAS (Delayed Auto Shift) and ARR (Auto Repeat Rate) for optimal responsiveness.
 
 ### Visual & Rendering System
@@ -34,15 +33,15 @@ Developed using the **"VibeCoding"** methodology, VibeCodeTris embodies a spec-f
 -   **Hardware-Accelerated Rendering:** Immerse yourself in fluid, buttery-smooth 60fps visuals, brought to life by the powerful PixiJS rendering engine.
 -   **Ghost Piece:** Enhance your precision with a toggleable ghost piece, providing a clear preview of where your current piece will land.
 -   **Customizable Block Styles:** Personalize your visual experience. Choose from a range of distinctive block themes, including `Modern`, `Classic`, `NES-like`, and the upcoming `Faceted Gem`.
--   **Dynamic Visual Effects:** A cutting-edge, modular "juice" system elevates every moment. Featuring the electrifying "Super Scanline" and nostalgic "VHS Glitch" multiplier displays, with exciting plans for advanced GSAP-powered animations and a sophisticated shader-based post-processing pipeline.
+-   **Dynamic Visual Effects:** A cutting-edge, modular "juice" system elevates every moment. Currently featuring the electrifying "Super Scanline" and nostalgic "VHS Glitch" multiplier displays as proofs of concept, with exciting plans for advanced GSAP-powered animations and a sophisticated shader-based post-processing pipeline. 
 
 ### Accessibility
 
 -   **Colorblind-Friendly Palettes:** Play comfortably with multiple expertly designed color palettes, including presets optimized for Deuteranopia, Protanopia, and Tritanopia.
 -   **High-Contrast Mode:** Opt for maximum visual clarity with a dedicated high-contrast theme.
 -   **Distinct Piece Patterns:** Pieces are uniquely identifiable through distinct patterns, ensuring clear differentiation without sole reliance on color.
--   **Screen Reader Support:** Empowering accessibility for all players, key game events are announced via ARIA live regions, supporting blind and low-vision users.
--   **Comprehensive Control Options:** Seamlessly control the game with full support for Keyboard, Gamepad, and intuitive Touch controls (featuring virtual buttons and gestures).
+-   **Screen Reader Support:** Empowering accessibility for all players, key game events are announced via ARIA live regions, supporting blind and low-vision users. (Implemented, but limited)
+-   **Comprehensive Control Options:** Seamlessly control the game with full support for Keyboard, Gamepad, and intuitive Touch controls (featuring virtual buttons and gestures). Custom remapping of controls is soon to be implemented in order to extend accessibility options
 
 ### Audio
 
@@ -58,15 +57,15 @@ VibeCodeTris stands on the foundation of a worker-authoritative architecture. Th
 
 ```mermaid
 graph TD
-    A[User Input] --> B(Main Thread: UI & Renderer);
-    B --> C{Input Manager};
-    C --> D[Worker: postMessage(Input)];
-    D --> E[Logic Worker];
-    E -- Game Logic (engine.ts) --> F[Generate Snapshot & Events];
-    F --> G[Worker: postMessage(Snapshot)];
-    G --> H(Main Thread: UI & Renderer);
-    H -- Renders Visuals --> I[Display on Screen];
-    H -- Triggers Audio --> J[Play Procedural Sounds];
+    A[User Input] --> B[Main Thread: UI & Renderer]
+    B --> C[Input Manager]
+    C --> D[Worker: postMessage Input]
+    D --> E[Logic Worker]
+    E --> F[Generate Snapshot & Events]
+    F --> G[Worker: postMessage Snapshot]
+    G --> H[Main Thread: UI & Renderer]
+    H --> I[Display on Screen]
+    H --> J[Play Procedural Sounds]
 ```
 
 This meticulously decoupled design is the bedrock for the project's unparalleled determinism and resilience, paving the way for advanced features like perfect replays and robust crash recovery.
@@ -106,6 +105,16 @@ Execute the comprehensive test suite with Vitest to rigorously validate the dete
 
 ---
 
+### VibeCoding
+
+I used VS Code with Gemini CLI, as well as GitHub Co-Pilot (Haiku) to build the project up from a spec to a functional offering. Additionally, all troubleshooting was iteratively addressed using Edge Co-Pilot and Developer's console error analysis. Anyone interested in adding features without knowing what they're doing could just grab the files, get a Gemini API key, install Gemini CLI for VS Code... and just ask the bots to implement the feature... 
+
+It's pretty cool. 
+---
+
 ## 📄 License
 
 This project is released under the **MIT License**. See the `LICENSE` file for full details.
+
+## Thank you
+Assets from www.kenney.nl. 
