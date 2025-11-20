@@ -278,6 +278,7 @@
             display: flex;
             flex-direction: column; /* Mobile-first: default to vertical stacking */
             width: 100%;
+            height: 100%; /* Ensure wrapper fills parent container height */
             max-width: 480px; /* Sensible max-width for portrait on tablets */
             padding: 10px;
             box-sizing: border-box;
@@ -287,6 +288,9 @@
             width: 100%;
             flex-grow: 1; /* Allow game container to fill available space */
             min-height: 0; /* Fix flexbox overflow issue in column layout */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .responsive-game-wrapper #touch-controls {

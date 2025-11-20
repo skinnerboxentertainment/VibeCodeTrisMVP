@@ -148,8 +148,19 @@ async function main() {
         if (!renderer) return;
 
         // Let CSS handle the layout. Read the size directly from the container.
-        const newWidth = gameContainer.clientWidth;
-        const newHeight = gameContainer.clientHeight;
+        let newWidth = gameContainer.clientWidth;
+        let newHeight = gameContainer.clientHeight;
+
+        // On mobile portrait, if height seems compressed, calculate based on viewport
+        const isMobilePortrait = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
+        const touchControlsHeight = touchControls.offsetHeight || 0;
+        const minGameHeight = 300; // Minimum reasonable game area height
+
+        if (isMobilePortrait && newHeight < minGameHeight) {
+            // Use viewport height minus touch controls and padding
+            const availableHeight = window.innerHeight - touchControlsHeight - 20;
+            newHeight = Math.max(availableHeight, minGameHeight);
+        }
 
         const scale = window.devicePixelRatio;
         
