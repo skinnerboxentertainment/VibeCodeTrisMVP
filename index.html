@@ -311,6 +311,46 @@
         }
         .setting-row input[type="range"] {
             width: 100%;
+            -webkit-appearance: none; /* Override default appearance for Chrome/Safari */
+            appearance: none;
+            background: transparent; /* Make default track transparent */
+        }
+        /* Styles for the slider track */
+        .setting-row input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px; /* Thicker track */
+            background: #555; /* Darker track */
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .setting-row input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px; /* Thicker track */
+            background: #555; /* Darker track */
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* Styles for the slider thumb */
+        .setting-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            border: 2px solid #fff; /* White border for the thumb */
+            height: 20px;
+            width: 20px;
+            border-radius: 50%; /* Circular thumb */
+            background: white; /* White thumb */
+            cursor: pointer;
+            margin-top: -6px; /* Center thumb vertically on track */
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        .setting-row input[type="range"]::-moz-range-thumb {
+            border: 2px solid #fff; /* White border for the thumb */
+            height: 20px;
+            width: 20px;
+            border-radius: 50%; /* Circular thumb */
+            background: white; /* White thumb */
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
         .setting-row select {
             width: 100%;
@@ -322,6 +362,38 @@
             font-size: 1.8vmin;
         }
 
+        /* Styles for gamepad navigation arrows */
+        .gamepad-nav-arrow {
+            display: none; /* Hidden by default */
+            font-size: 1.5em; /* Adjust size as needed */
+            color: yellow; /* A distinct color */
+            margin: 0 5px;
+            vertical-align: middle;
+        }
+
+        body.gamepad-active .gamepad-nav-arrow {
+            display: inline-block; /* Show when gamepad is active */
+        }
+
+        /* Flex container for horizontal alignment of select/range with arrows */
+        .setting-row .input-with-arrows,
+        .jammer-row .input-with-arrows {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Space between arrow and input */
+        }
+
+        /* Adjust input width within the flex container */
+        .setting-row .input-with-arrows select,
+        .setting-row .input-with-arrows input[type="range"],
+        .jammer-row .input-with-arrows select,
+        .jammer-row .input-with-arrows input[type="range"] {
+            flex-grow: 1; /* Allow input to take available space */
+            width: auto; /* Override specific widths */
+            min-width: unset; /* Override min-width for smaller screens */
+        }
+
+
         @media (min-width: 360px) {
             .setting-row {
                 flex-direction: row;
@@ -332,6 +404,11 @@
             .setting-row select {
                 width: auto;
                 min-width: 140px;
+            }
+             @media (min-width: 360px) {
+                .setting-row .input-with-arrows select {
+                    min-width: 140px; /* Reapply min-width for larger screens if necessary */
+                }
             }
         }
 
@@ -494,6 +571,40 @@
             box-shadow: 0 0 10px yellow;
         }
     </style>
+    <style>
+        /* --- About Panel Styles --- */
+        #about-panel {
+            position: absolute; /* Position relative to app-container */
+            background-color: rgba(30, 30, 30, 0.95); /* Dark, semi-transparent background */
+            border: 2px solid #555;
+            border-radius: 8px;
+            z-index: 10; /* Above main menu, below modals */
+            padding: 4vh 4vw;
+            width: 90%;
+            max-width: 50rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        #about-panel h2 {
+            font-size: 3vmin;
+            margin-top: 0;
+            margin-bottom: 2vh;
+        }
+        #about-panel p {
+            font-size: 1.8vmin;
+            line-height: 1.6;
+            margin-bottom: 3vh;
+            max-width: 60ch;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .about-buttons {
+            display: flex;
+            flex-direction: column; /* Changed from row to column */
+            justify-content: center;
+            gap: 1.5vh; /* Adjusted gap for vertical layout */
+        }
+    </style>
 </head>
 <body>
     <div id="notification-container"></div>
@@ -516,6 +627,19 @@
             <button id="play-button" class="vibe-button" data-focusable="true">Play</button>
             <button id="settings-button" class="vibe-button" data-focusable="true">Settings</button>
             <button id="btn-controls" class="vibe-button" data-focusable="true">Controls</button>
+            <button id="about-button" class="vibe-button" data-focusable="true">About</button>
+
+            <!-- About Panel (lives inside the main menu for positioning) -->
+            <div id="about-panel" class="hidden">
+                <h2>About VibeCodeTris</h2>
+                <p>
+                    This project is a modern, stylized interpretation of the classic falling block puzzle game, built with TypeScript, PixiJS, and Tone.js. It features a procedural, adaptive audio engine that generates music in real-time based on gameplay.
+                </p>
+                <div class="about-buttons">
+                    <button id="github-button" class="vibe-button" data-focusable="true">GitHub</button>
+                    <button id="back-button-about" class="vibe-button" data-focusable="true">Back</button>
+                </div>
+            </div>
         </div>
 
         <!-- In-Game Screen -->
@@ -544,32 +668,48 @@
                 <div id="gameplay-settings-section" class="controls-section">
                     <div class="setting-row">
                         <label for="das-slider">DAS (Delayed Auto Shift): <span id="das-value">10</span></label>
-                        <input type="range" id="das-slider" min="0" max="30" value="10" data-focusable="true">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="das-slider" min="0" max="30" value="10" data-focusable="true">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="setting-row">
                         <label for="arr-slider">ARR (Auto Repeat Rate): <span id="arr-value">1</span></label>
-                        <input type="range" id="arr-slider" min="0" max="10" value="1" data-focusable="true">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="arr-slider" min="0" max="10" value="1" data-focusable="true">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                 </div>
 
                 <div id="visuals-settings-section" class="controls-section hidden">
                     <div class="setting-row">
                         <label for="color-palette-select">Color Palette</label>
-                        <select id="color-palette-select" data-focusable="true">
-                            <option value="default">Default</option>
-                            <option value="deuteranopia">Deuteranopia</option>
-                            <option value="protanopia">Protanopia</option>
-                            <option value="tritanopia">Tritanopia</option>
-                        </select>
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <select id="color-palette-select" data-focusable="true">
+                                <option value="default">Default</option>
+                                <option value="deuteranopia">Deuteranopia</option>
+                                <option value="protanopia">Protanopia</option>
+                                <option value="tritanopia">Tritanopia</option>
+                            </select>
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="setting-row">
                         <label for="block-style-select">Custom Block Style</label>
-                        <select id="block-style-select" data-focusable="true">
-                            <option value="modern">Modern</option>
-                            <option value="classic">Classic</option>
-                            <option value="nes">NES-like</option>
-                            <option value="faceted-gem">Faceted Gem</option>
-                        </select>
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <select id="block-style-select" data-focusable="true">
+                                <option value="modern">Modern</option>
+                                <option value="classic">Classic</option>
+                                <option value="nes">NES-like</option>
+                                <option value="faceted-gem">Faceted Gem</option>
+                            </select>
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <fieldset class="settings-fieldset">
                         <legend>Visuals</legend>
@@ -595,8 +735,12 @@
                         </div>
                         <div class="setting-row">
                             <label for="line-clear-animation-select">Line Clear Animation Style</label>
-                            <select id="line-clear-animation-select" data-focusable="true">
-                            </select>
+                            <div class="input-with-arrows">
+                                <span class="gamepad-nav-arrow">&lt;</span>
+                                <select id="line-clear-animation-select" data-focusable="true">
+                                </select>
+                                <span class="gamepad-nav-arrow">&gt;</span>
+                            </div>
                         </div>
                         <div class="checkbox-row">
                             <label for="animated-line-clear-checkbox">Animated Line Clear</label>
@@ -608,13 +752,17 @@
                         </div>
                         <div class="setting-row">
                             <label for="multiplier-effect-select">Multiplier Effect</label>
-                            <select id="multiplier-effect-select" data-focusable="true">
-                                <option value="default">Default</option>
-                                <option value="scanline">Scanline</option>
-                                <option value="scanline_terminal">CRT Terminal</option>
-                                <option value="vhs_glitch">VHS Glitch</option>
-                                <option value="none">None</option>
-                            </select>
+                            <div class="input-with-arrows">
+                                <span class="gamepad-nav-arrow">&lt;</span>
+                                <select id="multiplier-effect-select" data-focusable="true">
+                                    <option value="default">Default</option>
+                                    <option value="scanline">Scanline</option>
+                                    <option value="scanline_terminal">CRT Terminal</option>
+                                    <option value="vhs_glitch">VHS Glitch</option>
+                                    <option value="none">None</option>
+                                </select>
+                                <span class="gamepad-nav-arrow">&gt;</span>
+                            </div>
                         </div>
                     </fieldset>
                 </div>
@@ -660,7 +808,11 @@
                     <h3>Controls</h3>
                     <div class="jammer-row">
                         <label for="jammer-load-preset">Load Preset</label>
-                        <select id="jammer-load-preset"></select>
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <select id="jammer-load-preset"></select>
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-live-preview">Live Preview</label>
@@ -668,7 +820,11 @@
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-preview-pitch">Preview Pitch</label>
-                        <input type="range" id="jammer-preview-pitch" min="24" max="96" value="60">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-preview-pitch" min="24" max="96" value="60">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <button id="jammer-play" class="vibe-button">Play</button>
                     <button id="jammer-randomize-all" class="vibe-button">Randomize All</button>
@@ -685,7 +841,11 @@
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-gain">Gain</label>
-                        <input type="range" id="jammer-gain" min="0" max="1" step="0.01" value="0.5">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-gain" min="0" max="1" step="0.01" value="0.5">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-max-voices">Max Voices</label>
@@ -693,7 +853,11 @@
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-reverb">Reverb</label>
-                        <input type="range" id="jammer-reverb" min="0" max="1" step="0.01" value="0">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-reverb" min="0" max="1" step="0.01" value="0">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                 </div>
 
@@ -702,29 +866,49 @@
                     <h3>Synthesizer</h3>
                     <div class="jammer-row">
                         <label for="jammer-waveform">Waveform</label>
-                        <select id="jammer-waveform">
-                            <option value="sine">Sine</option>
-                            <option value="square">Square</option>
-                            <option value="sawtooth">Sawtooth</option>
-                            <option value="triangle">Triangle</option>
-                        </select>
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <select id="jammer-waveform">
+                                <option value="sine">Sine</option>
+                                <option value="square">Square</option>
+                                <option value="sawtooth">Sawtooth</option>
+                                <option value="triangle">Triangle</option>
+                            </select>
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <!-- Envelope Controls -->
                     <div class="jammer-row">
                         <label for="jammer-env-attack">Attack</label>
-                        <input type="range" id="jammer-env-attack" min="0.001" max="2" step="0.001" value="0.005">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-env-attack" min="0.001" max="2" step="0.001" value="0.005">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-env-decay">Decay</label>
-                        <input type="range" id="jammer-env-decay" min="0" max="2" step="0.001" value="0.1">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-env-decay" min="0" max="2" step="0.001" value="0.1">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-env-sustain">Sustain</label>
-                        <input type="range" id="jammer-env-sustain" min="0" max="1" step="0.01" value="0.3">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-env-sustain" min="0" max="1" step="0.01" value="0.3">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                     <div class="jammer-row">
                         <label for="jammer-env-release">Release</label>
-                        <input type="range" id="jammer-env-release" min="0" max="5" step="0.01" value="1">
+                        <div class="input-with-arrows">
+                            <span class="gamepad-nav-arrow">&lt;</span>
+                            <input type="range" id="jammer-env-release" min="0" max="5" step="0.01" value="1">
+                            <span class="gamepad-nav-arrow">&gt;</span>
+                        </div>
                     </div>
                 </div>
             </div>

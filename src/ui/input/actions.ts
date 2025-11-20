@@ -13,3 +13,5 @@ export type GameAction =
     | 'pause'
     | 'back'
     | { type: 'setTimings', das: number, arr: number };
+
+export type InputType = 'keyboard' | 'gamepad' | 'touch';

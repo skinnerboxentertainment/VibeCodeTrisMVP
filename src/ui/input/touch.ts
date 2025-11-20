@@ -1,5 +1,5 @@
 // src/ui/input/touch.ts
-import { GameAction } from './actions';
+import { GameAction, InputType } from './actions';
 
 /**
  * Sets up touch controls (both virtual buttons and gestures) and returns a
@@ -9,7 +9,7 @@ import { GameAction } from './actions';
  * action is triggered by a touch event.
  * @returns A cleanup function that removes all attached event listeners.
  */
-export function setupTouchControls(actionHandler: (action: GameAction) => void): () => void {
+export function setupTouchControls(actionHandler: (action: GameAction, inputType: InputType) => void): () => void {
     // --- 1. Virtual Button Logic ---
     const buttonToActionMap: { [key: string]: GameAction } = {
         'btn-rot-ccw': 'rotateCCW',
@@ -29,7 +29,7 @@ export function setupTouchControls(actionHandler: (action: GameAction) => void):
 
         const action = buttonToActionMap[target.id];
         if (action) {
-            actionHandler(action);
+            actionHandler(action, 'touch');
         }
     };
 
@@ -40,7 +40,7 @@ export function setupTouchControls(actionHandler: (action: GameAction) => void):
 
         const action = buttonToActionMap[target.id];
         if (action && (action === 'moveLeft' || action === 'moveRight' || action === 'softDrop')) {
-            actionHandler(`${action}_release` as GameAction);
+            actionHandler(`${action}_release` as GameAction, 'touch');
         }
     };
 
@@ -96,11 +96,11 @@ export function setupTouchControls(actionHandler: (action: GameAction) => void):
         }
 
         if (action) {
-            actionHandler(action);
+            actionHandler(action, 'touch');
             // To prevent perpetual movement from a swipe, we immediately
             // send the corresponding release action.
             const releaseAction = `${action}_release` as GameAction;
-            setTimeout(() => actionHandler(releaseAction), 0);
+            setTimeout(() => actionHandler(releaseAction, 'touch'), 0);
         }
     };
 

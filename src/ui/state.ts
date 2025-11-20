@@ -11,6 +11,12 @@ export enum UIState {
     Controls,
 }
 
+export enum SettingsSection {
+    Gameplay,
+    Visuals,
+    Audio,
+}
+
 export interface VisualSettings {
     colorPalette: 'default' | 'deuteranopia' | 'protanopia' | 'tritanopia';
     blockStyle: 'modern' | 'classic' | 'nes' | 'faceted-gem';
@@ -27,6 +33,7 @@ export interface VisualSettings {
 
 export class UIStateManager {
     private currentState: UIState;
+    private currentSettingsSection: SettingsSection;
     private viewElements: Map<UIState, HTMLElement>;
     private visualSettings: VisualSettings = {
         colorPalette: 'default',
@@ -48,6 +55,7 @@ export class UIStateManager {
     constructor() {
         this.currentState = UIState.MainMenu;
         this.previousState = UIState.MainMenu;
+        this.currentSettingsSection = SettingsSection.Gameplay;
         this.viewElements = new Map();
 
         // Get all the view containers from the DOM
@@ -79,18 +87,22 @@ export class UIStateManager {
     }
 
     public changeState(newState: UIState): void {
-        console.log(`Changing UI state to: ${UIState[newState]}`);
         if (this.currentState === newState) {
             return; // No change
         }
-        
+    
         this.previousState = this.currentState;
         this.currentState = newState;
+    
+        // If we are leaving the settings screen, reset its internal state
+        if (this.previousState === UIState.Settings && newState !== UIState.Settings) {
+            this.resetSettingsSection();
+            this.resetSettingsVisuals();
+        }
+    
         this.updateVisibility();
         this.stateSubscribers.forEach(cb => cb(newState, this.previousState));
     }
-
-
 
     public getCurrentState(): UIState {
         return this.currentState;
@@ -98,6 +110,43 @@ export class UIStateManager {
 
     public getPreviousState(): UIState {
         return this.previousState;
+    }
+
+    public getCurrentSettingsSection(): SettingsSection {
+        return this.currentSettingsSection;
+    }
+
+    public setCurrentSettingsSection(section: SettingsSection): void {
+        this.currentSettingsSection = section;
+    }
+
+    public resetSettingsSection(): void {
+        this.currentSettingsSection = SettingsSection.Gameplay;
+    }
+
+    private resetSettingsVisuals(): void {
+        const tabs = document.querySelectorAll<HTMLButtonElement>('#settings-form .control-tab');
+        const sections = {
+            gameplay: document.getElementById('gameplay-settings-section'),
+            visuals: document.getElementById('visuals-settings-section'),
+            audio: document.getElementById('audio-settings-section'),
+        };
+
+        tabs.forEach(tab => {
+            const setting = tab.dataset.settings;
+            if (setting === 'gameplay') {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        for (const key in sections) {
+            const section = sections[key as keyof typeof sections];
+            if (section) {
+                section.classList.toggle('hidden', key !== 'gameplay');
+            }
+        }
     }
 
     private updateVisibility(): void {

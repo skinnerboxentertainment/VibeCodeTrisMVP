@@ -1,5 +1,5 @@
 // src/ui/input/UINavigator.ts
-import { UIState, UIStateManager } from '../state';
+import { UIState, UIStateManager, SettingsSection } from '../state';
 
 export class UINavigator {
     private focusableElements: HTMLElement[] = [];
@@ -26,11 +26,18 @@ export class UINavigator {
 
         this.settingTabs = [];
         this.activeTabIndex = -1;
+        
+        if (newState === UIState.Settings) {
+            this.activeTabIndex = this.uiManager.getCurrentSettingsSection();
+        }
+
         this.updateFocusableElements();
 
         if (this.focusableElements.length > 0) {
             // In settings or controls, focus the first tab by default
-            if ((newState === UIState.Settings || newState === UIState.Controls) && this.settingTabs.length > 0) {
+            if (newState === UIState.Settings && this.settingTabs.length > 0) {
+                this.setFocus(this.activeTabIndex);
+            } else if (newState === UIState.Controls && this.settingTabs.length > 0) {
                 this.activeTabIndex = 0;
                 this.setFocus(0);
             } else {
@@ -71,7 +78,9 @@ export class UINavigator {
         if (currentState === UIState.Settings) {
             this.settingTabs = Array.from(container.querySelectorAll('.control-tab[data-settings]'));
             
-            if (this.activeTabIndex === -1) this.activeTabIndex = 0; // Default to first tab
+            if (this.activeTabIndex === -1) {
+                this.activeTabIndex = this.uiManager.getCurrentSettingsSection();
+            }
 
             const activeTab = this.settingTabs[this.activeTabIndex];
             const sectionName = activeTab.dataset.settings;
@@ -90,7 +99,11 @@ export class UINavigator {
         } else if (currentState === UIState.Controls) {
             this.settingTabs = Array.from(container.querySelectorAll('.control-tab'));
             const closeButton = document.getElementById('btn-close-controls');
+            const backButton = document.getElementById('back-button-controls');
             this.focusableElements = [...this.settingTabs];
+            if (backButton) {
+                this.focusableElements.push(backButton);
+            }
             if (closeButton) {
                 this.focusableElements.push(closeButton);
             }
@@ -119,7 +132,7 @@ export class UINavigator {
     public navigateDown(): void {
         if (this.focusableElements.length === 0) return;
         const currentState = this.uiManager.getCurrentState();
-
+    
         if (currentState === UIState.Settings) {
             // If a tab is focused, move to the first item in its section
             const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
@@ -139,25 +152,28 @@ export class UINavigator {
                 }
             }
         } else if (currentState === UIState.Controls) {
-            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
+            const tabCount = this.settingTabs.length;
+            const backButtonIndex = tabCount;
+            const closeButtonIndex = tabCount + 1;
+            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < tabCount;
+
             if (isTabFocused) {
-                // from any tab, down goes to the close button
-                const closeButtonIndex = this.focusableElements.length - 1;
-                this.setFocus(closeButtonIndex);
+                this.setFocus(backButtonIndex); // From tab to Back button
+            } else if (this.currentFocusIndex === backButtonIndex) {
+                this.setFocus(closeButtonIndex); // From Back to Close button
             } else {
-                // from the close button, down goes to the active tab
-                this.setFocus(this.activeTabIndex);
+                this.setFocus(this.activeTabIndex); // From Close button to active tab
             }
         } else {
             const newIndex = (this.currentFocusIndex + 1) % this.focusableElements.length;
             this.setFocus(newIndex);
         }
     }
-
+    
     public navigateUp(): void {
         if (this.focusableElements.length === 0) return;
         const currentState = this.uiManager.getCurrentState();
-
+    
         if (currentState === UIState.Settings) {
             const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
             if (!isTabFocused) {
@@ -172,14 +188,17 @@ export class UINavigator {
                 }
             }
         } else if (currentState === UIState.Controls) {
-            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;
+            const tabCount = this.settingTabs.length;
+            const backButtonIndex = tabCount;
+            const closeButtonIndex = tabCount + 1;
+            const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < tabCount;
+
             if (isTabFocused) {
-                // from any tab, up goes to the close button
-                const closeButtonIndex = this.focusableElements.length - 1;
-                this.setFocus(closeButtonIndex);
+                this.setFocus(closeButtonIndex); // From tab to Close button
+            } else if (this.currentFocusIndex === closeButtonIndex) {
+                this.setFocus(backButtonIndex); // From Close to Back button
             } else {
-                // from the close button, up goes to the active tab
-                this.setFocus(this.activeTabIndex);
+                this.setFocus(this.activeTabIndex); // From Back button to active tab
             }
         } else {
             const newIndex = (this.currentFocusIndex - 1 + this.focusableElements.length) % this.focusableElements.length;
@@ -188,6 +207,37 @@ export class UINavigator {
     }
 
     public navigate(direction: 'left' | 'right'): void {
+        if (this.currentlyFocusedElement instanceof HTMLSelectElement) {
+            const select = this.currentlyFocusedElement;
+            let newIndex = select.selectedIndex;
+            if (direction === 'left') {
+                newIndex = Math.max(0, select.selectedIndex - 1);
+            } else { // 'right'
+                newIndex = Math.min(select.options.length - 1, select.selectedIndex + 1);
+            }
+            if (newIndex !== select.selectedIndex) {
+                select.selectedIndex = newIndex;
+                select.dispatchEvent(new Event('change'));
+            }
+            return;
+        }
+
+        if (this.currentlyFocusedElement instanceof HTMLInputElement && this.currentlyFocusedElement.type === 'range') {
+             const slider = this.currentlyFocusedElement;
+             const step = slider.step ? parseFloat(slider.step) : 1;
+             let value = parseFloat(slider.value);
+             if (direction === 'left') {
+                 value = Math.max(parseFloat(slider.min), value - step);
+             } else { // 'right'
+                 value = Math.min(parseFloat(slider.max), value + step);
+             }
+             if (value !== parseFloat(slider.value)) {
+                 slider.value = String(value);
+                 slider.dispatchEvent(new Event('input')); // Use 'input' for live updates
+             }
+             return;
+        }
+
         if (this.uiManager.getCurrentState() !== UIState.Settings && this.uiManager.getCurrentState() !== UIState.Controls) return;
 
         const isTabFocused = this.currentFocusIndex >= 0 && this.currentFocusIndex < this.settingTabs.length;

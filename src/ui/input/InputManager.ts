@@ -1,6 +1,6 @@
 // src/ui/input/InputManager.ts
 import { renderAPI } from '../../renderer/renderAPI';
-import { GameAction } from './actions';
+import { GameAction, InputType } from './actions';
 import { setupKeyboardControls } from './keyboard';
 import { setupTouchControls } from './touch';
 import { setupGamepadControls } from './gamepad';
@@ -19,6 +19,7 @@ export class InputManager {
     private notificationManager: NotificationManager;
     private uiManager: UIStateManager;
     private uiNavigator: UINavigator;
+    private lastInputType: InputType | null = null;
 
     constructor(notificationManager: NotificationManager, uiManager: UIStateManager) {
         this.notificationManager = notificationManager;
@@ -29,7 +30,14 @@ export class InputManager {
          * The central handler that receives an action from any input source
          * and forwards it to the game engine or UI navigator.
          */
-        const actionHandler = (action: GameAction) => {
+        const actionHandler = (action: GameAction, inputType: InputType) => {
+            this.lastInputType = inputType;
+            if (inputType === 'gamepad') {
+                document.body.classList.add('gamepad-active');
+            } else {
+                document.body.classList.remove('gamepad-active');
+            }
+
             const state = this.uiManager.getCurrentState();
 
             if (action === 'pause') {
@@ -92,30 +100,31 @@ export class InputManager {
             }
         };
 
-        this.detectAndSetupInputs(actionHandler);
-    }
+        const keyboardActionHandler = (action: GameAction, inputType: InputType) => {
+            actionHandler(action, 'keyboard');
+        };
+        const touchActionHandler = (action: GameAction, inputType: InputType) => {
+            actionHandler(action, 'touch');
+        };
+        const gamepadActionHandler = (action: GameAction, inputType: InputType) => {
+            actionHandler(action, 'gamepad');
+        };
 
-    private detectAndSetupInputs(actionHandler: (action: GameAction) => void) {
-        const detectedInputs: string[] = [];
 
-        // 1. Keyboard (always assumed)
-        this.cleanupKeyboard = setupKeyboardControls(actionHandler);
-        detectedInputs.push('Keyboard');
-        console.log("InputManager: Keyboard controls enabled.");
-
-        // 2. Touch
+        this.cleanupKeyboard = setupKeyboardControls(keyboardActionHandler);
+        
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         if (isTouchDevice) {
-            this.cleanupTouch = setupTouchControls(actionHandler);
-            detectedInputs.push('Touch');
+            this.cleanupTouch = setupTouchControls(touchActionHandler);
         } else {
             this.cleanupTouch = () => {}; // No-op cleanup
         }
 
-        // 3. Gamepad
-        this.cleanupGamepad = setupGamepadControls(actionHandler, this.notificationManager);
-        
-        // Check for already connected gamepads
+        this.cleanupGamepad = setupGamepadControls(gamepadActionHandler, this.notificationManager);
+
+        const detectedInputs: string[] = [];
+        if (this.cleanupKeyboard) detectedInputs.push('Keyboard');
+        if (isTouchDevice) detectedInputs.push('Touch');
         const gamepads = navigator.getGamepads();
         if (gamepads.some(g => g)) {
             detectedInputs.push('Gamepad');
@@ -124,24 +133,5 @@ export class InputManager {
         // Show initial notification
         this.notificationManager.showToast(`Inputs: ${detectedInputs.join(', ')}`, 4000);
     }
-
-    /**
-     * Sends new timing values to the engine.
-     * @param das The new Delayed Auto Shift value.
-     * @param arr The new Auto Repeat Rate value.
-     */
-    public updateTimings(das: number, arr: number): void {
-        renderAPI.sendInput({ type: 'setTimings', das, arr });
-    }
-
-    /**
-     * Disables all active input listeners. This is useful for cleaning up
-     * when the game is paused or over.
-     */
-    public disable() {
-        this.cleanupKeyboard();
-        this.cleanupTouch();
-        this.cleanupGamepad();
-        console.log("InputManager: All controls disabled.");
-    }
 }
+

@@ -1,12 +1,12 @@
 // src/ui/input/keyboard.ts
-import { GameAction } from './actions';
+import { GameAction, InputType } from './actions';
 
 /**
  * Sets up keyboard event listeners and maps key presses to game actions.
  * @param onAction - A callback function to be invoked when a game action is triggered.
  * @returns A cleanup function that removes the event listener.
  */
-export function setupKeyboardControls(onAction: (action: GameAction) => void): () => void {
+export function setupKeyboardControls(onAction: (action: GameAction, inputType: InputType) => void): () => void {
     const KEY_MAP: { [key: string]: GameAction } = {
         'ArrowLeft': 'moveLeft',
         'ArrowRight': 'moveRight',
@@ -24,7 +24,7 @@ export function setupKeyboardControls(onAction: (action: GameAction) => void): (
         const action = KEY_MAP[e.key];
         if (action) {
             e.preventDefault(); // Prevent default browser actions (e.g., scrolling)
-            onAction(action);
+            onAction(action, 'keyboard');
         }
     };
 
@@ -32,7 +32,7 @@ export function setupKeyboardControls(onAction: (action: GameAction) => void): (
         const action = KEY_MAP[e.key];
         if (action && (action === 'moveLeft' || action === 'moveRight' || action === 'softDrop')) {
             e.preventDefault();
-            onAction(`${action}_release` as GameAction);
+            onAction(`${action}_release` as GameAction, 'keyboard');
         }
     };
 

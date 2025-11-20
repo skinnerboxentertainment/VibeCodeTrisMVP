@@ -21,7 +21,7 @@ function validateUIElements(elements: { [key: string]: HTMLElement | null }): vo
     }
 }
 
-function initializeSettingsTabs() {
+function initializeSettingsTabs(uiManager: UIStateManager) {
     const tabs = document.querySelectorAll<HTMLButtonElement>('#settings-form .control-tab');
     const sections = {
         gameplay: document.getElementById('gameplay-settings-section'),
@@ -43,6 +43,15 @@ function initializeSettingsTabs() {
                 if (section) {
                     section.classList.toggle('hidden', key !== setting);
                 }
+            }
+
+            // Update the UIStateManager
+            if (setting === 'gameplay') {
+                uiManager.setCurrentSettingsSection(SettingsSection.Gameplay);
+            } else if (setting === 'visuals') {
+                uiManager.setCurrentSettingsSection(SettingsSection.Visuals);
+            } else if (setting === 'audio') {
+                uiManager.setCurrentSettingsSection(SettingsSection.Audio);
             }
         });
     });
@@ -189,6 +198,10 @@ async function main() {
         mainMenuButton: document.getElementById('main-menu-button'),
         resumeButton: document.getElementById('resume-button'),
         quitButton: document.getElementById('quit-button'),
+        aboutButton: document.getElementById('about-button'),
+        aboutPanel: document.getElementById('about-panel'),
+        backButtonAbout: document.getElementById('back-button-about'),
+        githubButton: document.getElementById('github-button'),
         dasSlider: document.getElementById('das-slider'),
         arrSlider: document.getElementById('arr-slider'),
         dasValue: document.getElementById('das-value'),
@@ -237,7 +250,7 @@ async function main() {
     const toneJammerManager = new ToneJammerManager(audioConfig, audioEngine, jammerElements as any);
 
     initializeControlsPanel(uiManager, 'controls-button-pause');
-    initializeSettingsTabs();
+    initializeSettingsTabs(uiManager);
 
     // Populate line clear animation dropdown
     animationManager.getAnimationNames().forEach(name => {
@@ -331,6 +344,20 @@ async function main() {
     uiElements.quitButton!.addEventListener('click', () => {
         uiManager.changeState(UIState.MainMenu);
         accessibilityManager.announce('Quitting to main menu.');
+    });
+    uiElements.aboutButton!.addEventListener('click', () => {
+        uiElements.aboutPanel?.classList.remove('hidden');
+        accessibilityManager.announce('About panel opened.');
+    });
+
+    uiElements.backButtonAbout!.addEventListener('click', () => {
+        uiElements.aboutPanel?.classList.add('hidden');
+        accessibilityManager.announce('About panel closed.');
+    });
+
+    uiElements.githubButton!.addEventListener('click', () => {
+        window.open('https://github.com/skinnerboxentertainment/VibeCodeTrisMVP', '_blank');
+        accessibilityManager.announce('Opening GitHub repository in a new tab.');
     });
 
     // Tone Jammer Listeners
