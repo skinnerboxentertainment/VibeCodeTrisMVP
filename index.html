@@ -655,6 +655,15 @@
             justify-content: center;
             gap: 1.5vh; /* Adjusted gap for vertical layout */
         }
+        .footer-text {
+            color: #FFFF00;
+            font-size: 1.5vmin; /* Smaller than the main font */
+            text-align: center;
+            margin-top: 2vh;
+        }
+        .footer-text p {
+            margin: 0.5vh 0; /* A little space between lines */
+        }
     </style>
 </head>
 <body>
@@ -680,11 +689,23 @@
             <button id="btn-controls" class="vibe-button" data-focusable="true">Controls</button>
             <button id="about-button" class="vibe-button" data-focusable="true">About</button>
 
+            <div class="footer-text">
+                <p>Idea Guy Interactive</p>
+                <p>Skinnerbox Entertainment</p>
+                <p>2025</p>
+                <p>(MIT License)</p>
+                <p>---</p>
+                <p>This project is not 
+                <p>affiliated with or</p> 
+                <p>endorsed by
+                <p>The Tetris Company.</p>
+            </div>
+
             <!-- About Panel (lives inside the main menu for positioning) -->
             <div id="about-panel" class="hidden">
                 <h2>About VibeCodeTris</h2>
                 <p>
-                    This project is a modern, stylized interpretation of the classic falling block puzzle game, built with TypeScript, PixiJS, and Tone.js. It features a procedural, adaptive audio engine that generates music in real-time based on gameplay.
+                    This project is a modern, extensible, stylized interpretation of a classic falling block puzzle game, built with TypeScript, PixiJS, and Tone.js. It features a procedural, adaptive audio engine that generates music in real-time based on gameplay. Every aspect of the project was generated through Vibecoding.
                 </p>
                 <div class="about-buttons">
                     <button id="github-button" class="vibe-button" data-focusable="true">GitHub</button>
